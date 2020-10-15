@@ -232,17 +232,20 @@ exports.header = struct([
 ])
 
 const NSPVREQ = {
-  NSPV_UTXOS: 0x02
+  NSPV_UTXOS: 0x02,
+  NSPV_REMOTERPC: 0x14
 };
 
 const NSPVRESP = {
-  NSPV_UTXOSRESP: 0x03
+  NSPV_UTXOSRESP: 0x03,
+  NSPV_REMOTERPCRPC: 0x15
 };
 
 exports.NSPVREQ = NSPVREQ;
 exports.NSPVRESP = NSPVRESP;
 
 let bufferaddr = struct.Buffer(64);
+let methodtype = struct.Buffer(64);
 
 let utxoreq = struct([
   { name: 'reqCode', type: struct.UInt8 },
@@ -275,6 +278,18 @@ let utxoresp = struct([
 
 ]);
 
+let remoterpc = struct([
+  { name: 'reqCode', type: struct.UInt8 },
+  { name: 'length', type: struct.UInt32LE },  
+  { name: 'jsonser', type: struct.Buffer }
+]);
+
+let remoterpcresp = struct([
+  { name: 'respCode', type: struct.UInt8 },
+  { name: 'method', type: methodtype  },  
+  { name: 'jsonser', type: struct.Buffer }
+]);
+
 exports.nspvReq = (function () {
   function encode (value, buffer = Buffer.alloc(encodingLength(value)), offset = 0) {
     value = Object.assign({}, value)
@@ -294,6 +309,9 @@ exports.nspvReq = (function () {
     {
       case NSPVREQ.NSPV_UTXOS:
         type = utxoreq;
+        break;
+      case NSPVREQ.NSPV_REMOTERPC:
+        type = remoterpc;
         break;
       default:
         return;
@@ -341,6 +359,9 @@ exports.nspvResp = (function () {
     {
       case NSPVRESP.NSPV_UTXOSRESP:
         type = utxoresp;
+        break;
+      case NSPVREQ.NSPV_REMOTERPCRESP:
+        type = remoterpcresp;
         break;
       default:
         return;
